@@ -1,0 +1,94 @@
+<html>
+<head>
+	<meta http-equiv="Content-Type" content="text/html; Charset=utf-8"/>
+    <title>WebSocket Test</title>
+</head>
+<body>
+
+<h2>Message Board</h2>
+<label>消息:</label>
+<input id="msgId"/>
+
+<button id="sendBt">发送</button>
+<button id="closeBt">关闭</button>
+<button id="connectBt">连接</button>
+<button id="clearBt">清空</button>
+<button id="startPushBt">开始推送消息</button>
+
+<div style="margin-top: 10px;">
+	连接状态:<label id="stateLbl"></label>
+</div>
+
+<fieldset style="margin-top: 20px;">
+	<legend>输出</legend>
+    <div id="msgBoard" style="margin-top: 10px ; width: 100%; height: 100%; overflow: auto; line-height: 18px; font-size: 14px;"></div>
+</fieldset>
+
+<script type="text/javascript">
+	var ws = createSocket();
+
+    $("sendBt").onclick = function(){
+		sendMsg($("msgId").value);
+    }
+	$("closeBt").onclick = function(){
+		ws.close();
+	}
+	$("connectBt").onclick = function(){
+		if(ws.readyState == 3){
+			ws = createSocket();
+		}else{
+			showMsg('STAT',ws.readyState + " WebSocket is not closed");
+		}
+	}
+	$("clearBt").onclick = function(){
+		$('msgBoard').innerHTML = '';
+	}
+	$("startPushBt").onclick = function(){
+		sendMsg('START_PUSH');	
+	}
+
+	function createSocket(){
+		var	ws = new WebSocket("ws://localhost:81/websocket/hello");
+	    ws.onopen = function() {
+			ws.send("Hello Server");
+			state();
+		};
+
+		ws.onmessage = function (evt) {
+			showMsg('RECV', evt.data);
+		};
+
+		ws.onclose = function() {
+			showMsg('DEBUG', "Closed!");
+			state();
+		};
+
+		ws.onerror = function(err) {
+			showMsg("ERROR", err);
+		};
+		return ws;
+	}
+
+	function sendMsg(msg){
+		if(ws.readyState != 1){
+            showMsg('DEBUG', "websocket is not ready!" +  "state:" + ws.readyState);
+            return;
+        }
+        ws.send(msg);
+		showMsg('SEND', msg);	
+	}
+
+	function state(){
+		$('stateLbl').innerHTML = ws.readyState;
+	}
+
+	function $(id){
+		return document.getElementById(id);
+	}
+
+	function showMsg(tag,msg){
+		$("msgBoard").innerHTML += new Date() + tag + ":" + msg + "<br/>";
+	}
+</script>
+</body>
+</html>
